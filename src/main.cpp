@@ -5,8 +5,13 @@ using std::cout;
 using std::endl;
 using std::cerr;
 
-static inline int callback(void *, int argc, char **argv, char **azColName) noexcept {
-  for(auto i = 0u; i< argc; i++)
+[[noreturn]] static inline void panic(const char* const errMsg) noexcept {
+  cout << errMsg << endl;
+  exit(EXIT_FAILURE);
+}
+
+static inline int callback(void *, int argc, char** argv, char** azColName) noexcept {
+  for(auto i = 0u; i < argc; i++)
   {
     cout << azColName[i] <<" = " << (argv[i] ? argv[i] : "NULL") << endl;
   }
@@ -19,8 +24,7 @@ int main() noexcept {
   int rc{sqlite3_open("../item.db", &db)};
   {
     if(rc) {
-      cerr << "Can't open database: " << sqlite3_errmsg(db) << endl;
-      return EXIT_FAILURE;
+      panic(sqlite3_errmsg(db));
     } else {
       cout << "Open database successfully" << endl;
     }
@@ -29,11 +33,12 @@ int main() noexcept {
   {
     rc = sqlite3_exec(db, "SELECT * FROM ebooks", callback, nullptr, nullptr);
     if (rc != SQLITE_OK) {
-      cerr << "Something bad happened: " << sqlite3_errmsg(db) << endl;
+      panic(sqlite3_errmsg(db));
     }
   }
 
   {
-
+    sqlite3_close(db);
+    return EXIT_SUCCESS;
   }
 }
